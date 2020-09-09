@@ -9,7 +9,6 @@ import * as jwt from 'jsonwebtoken';
 import {NextFunction} from 'connect';
 
 import * as EmailValidator from 'email-validator';
-import {config} from 'bluebird';
 
 const router: Router = Router();
 
@@ -33,20 +32,20 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   console.log(new Date().toLocaleString() + `: ${pid} - Requested for User Verification : ${req.body.email}`);
   
   if (!req.headers || !req.headers.authorization) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification : ${req.body.email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification(No authorization headers.) : ${req.body.email}`);
     return res.status(401).send({message: 'No authorization headers.'});
   }
 
   const tokenBearer = req.headers.authorization.split(' ');
   if (tokenBearer.length != 2) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification : ${req.body.email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification(Malformed token.) : ${req.body.email}`);
     return res.status(401).send({message: 'Malformed token.'});
   }
 
   const token = tokenBearer[1];
   return jwt.verify(token, c.config.jwt.secret, (err, decoded) => {
     if (err) {
-      console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification : ${req.body.email}`);
+      console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification(Failed to authenticate.) : ${req.body.email}`);
       return res.status(500).send({auth: false, message: 'Failed to authenticate.'});
     }
     console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for request verification : ${req.body.email}`);
@@ -66,25 +65,25 @@ router.post('/login', async (req: Request, res: Response) => {
   let pid = uuid();
   console.log(new Date().toLocaleString() + `: ${pid} - Requested for User Login : ${email}`);
   if (!email || !EmailValidator.validate(email)) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login : ${email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login(Email is required or malformed.) : ${email}`);
     return res.status(400).send({auth: false, message: 'Email is required or malformed.'});
   }
 
   if (!password) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login : ${email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login(Password is required.) : ${email}`);
     return res.status(400).send({auth: false, message: 'Password is required.'});
   }
 
   const user = await User.findByPk(email);
   if (!user) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login : ${email}`);
-    return res.status(401).send({auth: false, message: 'User was not found..'});
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login(User was not found.) : ${email}`);
+    return res.status(401).send({auth: false, message: 'User was not found.'});
   }
 
   const authValid = await comparePasswords(password, user.passwordHash);
 
   if (!authValid) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login : ${email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Login(Password was invalid.) : ${email}`);
     return res.status(401).send({auth: false, message: 'Password was invalid.'});
   }
 
@@ -101,18 +100,18 @@ router.post('/', async (req: Request, res: Response) => {
   console.log(new Date().toLocaleString() + `: ${pid} - Requested for User Register : ${email}`);
   
   if (!email || !EmailValidator.validate(email)) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Register : ${email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Register(Email is missing or malformed.) : ${email}`);
     return res.status(400).send({auth: false, message: 'Email is missing or malformed.'});
   }
 
   if (!plainTextPassword) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Register : ${email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Register(Password is required) : ${email}`);
     return res.status(400).send({auth: false, message: 'Password is required.'});
   }
 
   const user = await User.findByPk(email);
   if (user) {
-    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Register : ${email}`);
+    console.log(new Date().toLocaleString() + `: ${pid} - Finished processing request for User Register(User already exists.) : ${email}`);
     return res.status(422).send({auth: false, message: 'User already exists.'});
   }
 
